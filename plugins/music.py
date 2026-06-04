@@ -6,6 +6,7 @@ from telethon import events
 from telethon.tl.functions.phone import CreateGroupCallRequest, InviteToGroupCallRequest
 from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.messages import GetFullChatRequest
+from telethon.tl.types import PeerUser
 
 # DARK-USERBOT Framework Components
 from database import get_maintenance, is_sudo, is_banned
@@ -62,21 +63,21 @@ async def setup(client):
         except Exception:
             pass
 
-    # 1. PROFESSIONAL PLAY COMMAND (Har bot user aur sudo user ke liye enabled)
+    # 1. NO-DM REQUIREMENT PLAY COMMAND (Har user ke liye live background sync)
     @client.on(events.NewMessage(pattern=r"^\.play(?:\s+(.*))?$", outgoing=True))
     @client.on(events.NewMessage(pattern=r"^\.play(?:\s+(.*))?$", incoming=True))
-    async def professional_play_engine(event):
+    async def automated_play_engine(event):
         if await is_banned(event.sender_id): return
         if event.incoming:
             if event.sender_id != OWNER_ID and not await is_sudo(event.sender_id): return
 
         query = event.pattern_match.group(1)
         
-        # Immediate acknowledgement to verify the bot is alive and responding
+        # Instant Response Triggering
         if event.outgoing:
-            panel = await event.edit("🔍 **Professional Engine: Fetching Audio Node...**")
+            panel = await event.edit("🔍 **Professional Engine: Fetching Audio Link...**")
         else:
-            panel = await event.reply("🔍 **Professional Engine: Fetching Audio Node...**")
+            panel = await event.reply("🔍 **Professional Engine: Fetching Audio Link...**")
 
         if not query:
             return await panel.edit("❌ **Format:** `.play [Song Name / URL]`")
@@ -86,19 +87,29 @@ async def setup(client):
 
         try:
             stream_url, track_title = await fetch_direct_audio(query)
-            await panel.edit(f"✨ **Found:** `{track_title}`\n🛰️ *Initializing Voice Chat Automation Pipeline...*")
+            await panel.edit(f"✨ **Found:** `{track_title}`\n🛰️ *Initializing Voice Chat & Assistant Auto-Injection...*")
         except Exception as err:
             return await panel.edit(f"❌ **Audio Stream Core Blocked:** `{str(err)}`")
 
         try:
-            # STEP 1: Auto-start Voice Chat natively if it's off
+            # STEP 1: Auto-create/start Voice Chat natively if it's off
             try:
                 await event.client(CreateGroupCallRequest(peer=event.chat_id))
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(1)
             except Exception:
                 pass 
 
-            # STEP 2: Fetch group call structural data safely
+            # STEP 2: Fetch Assistant's Numerical ID from its own live session (Bypasses all Peer Username Bugs)
+            assistant_me = await assistant.get_me()
+            assistant_id = assistant_me.id
+
+            # STEP 3: Assistant joins group directory text-side to clear restrictions
+            try:
+                await assistant.join_chat(event.chat_id)
+            except Exception:
+                pass
+
+            # STEP 4: Fetch group call info updates safely
             try:
                 full_chat = await event.client(GetFullChannelRequest(channel=event.chat_id))
                 call_info = full_chat.full_chat.group_call
@@ -109,29 +120,18 @@ async def setup(client):
             if not call_info:
                 return await panel.edit("❌ **Failed to initialize or find Voice Chat context.**")
 
-            # STEP 3: Safe Invite using Assistant Username fallback
-            try:
-                target_assistant = await event.client.get_input_entity("SIRxMSD")
-                await event.client(InviteToGroupCallRequest(
-                    call=call_info,
-                    users=[target_assistant]
-                ))
-            except Exception as e:
-                # Fallback: Agar input entity fail ho toh dynamic system response error throw karega
-                return await panel.edit(f"❌ **Assistant Entity Resolution Failed:** Send a message to `@SIRxMSD` from your main account first, then retry. `{str(e)}`")
-
-            await panel.edit(f"✨ **Assistant Invited Successfully!**\n🛰️ *Establishing Audio Stream Connection...*")
-
-            try:
-                await assistant.join_chat(event.chat_id)
-            except Exception:
-                pass 
+            # STEP 5: Pure ID-Based Group Call Invite Bridge (Zero Chat History / DM Required)
+            # Pass input user natively as PeerUser mapping structure
+            await event.client(InviteToGroupCallRequest(
+                call=call_info,
+                users=[PeerUser(user_id=assistant_id)]
+            ))
 
             await panel.edit(
                 f"🎵 **Now Streaming Live**\n\n"
                 f"🔹 **Title:** `{track_title}`\n"
-                f"👤 **Triggered By:** [Userbot Admin]\n"
-                f"⚙️ **Status:** Professional Invite Pipeline Completed"
+                f"👤 **Requested By:** [Admin Nodes]\n"
+                f"⚙️ **Status:** Professional Automation Active (No-DM Loop)"
             )
 
         except Exception as framework_err:
@@ -157,4 +157,4 @@ async def setup(client):
             await panel.edit("⏹️ **Assistant stream disconnected successfully.**")
         except Exception as err:
             await panel.edit(f"❌ **Exit Error:** `{str(err)}`")
-                
+            
