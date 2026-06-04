@@ -14,10 +14,6 @@ from config import OWNER_ID
 # --- pyrogram ASSISTANT ENGINE INITIALIZATION ---
 from pyrogram import Client as PyroClient
 ASSISTANT_SESSION = environ.get("ASSISTANT_SESSION", "")
-
-# FIXED: Tera exact assistant username yahan lock kar diya hai
-ASSISTANT_USERNAME = "SIRxMSD"  
-
 assistant = PyroClient("DarkAssistant", session_string=ASSISTANT_SESSION) if ASSISTANT_SESSION else None
 
 # --- MULTI-PLATFORM DIRECT AUDIO SEARCH & BYPASS PIPELINE ---
@@ -66,7 +62,7 @@ async def setup(client):
         except Exception:
             pass
 
-    # 1. PROFESSIONAL PLAY COMMAND (Har bot user aur sudo user ke liye controller enabled)
+    # 1. PROFESSIONAL PLAY COMMAND (Har bot user aur sudo user ke liye enabled)
     @client.on(events.NewMessage(pattern=r"^\.play(?:\s+(.*))?$", outgoing=True))
     @client.on(events.NewMessage(pattern=r"^\.play(?:\s+(.*))?$", incoming=True))
     async def professional_play_engine(event):
@@ -76,6 +72,7 @@ async def setup(client):
 
         query = event.pattern_match.group(1)
         
+        # Immediate acknowledgement to verify the bot is alive and responding
         if event.outgoing:
             panel = await event.edit("🔍 **Professional Engine: Fetching Audio Node...**")
         else:
@@ -94,14 +91,14 @@ async def setup(client):
             return await panel.edit(f"❌ **Audio Stream Core Blocked:** `{str(err)}`")
 
         try:
-            # STEP 1: Voice Chat Auto-Creation Layer (Bina tumhare chhede agar band hui toh khud on karega)
+            # STEP 1: Auto-start Voice Chat natively if it's off
             try:
                 await event.client(CreateGroupCallRequest(peer=event.chat_id))
-                await asyncio.sleep(1.5) # Dynamic sync delay
+                await asyncio.sleep(1.5)
             except Exception:
                 pass 
 
-            # STEP 2: Fetch group call metadata safely
+            # STEP 2: Fetch group call structural data safely
             try:
                 full_chat = await event.client(GetFullChannelRequest(channel=event.chat_id))
                 call_info = full_chat.full_chat.group_call
@@ -112,15 +109,18 @@ async def setup(client):
             if not call_info:
                 return await panel.edit("❌ **Failed to initialize or find Voice Chat context.**")
 
-            # STEP 3: Professional Invite Bridge using @SIRxMSD username entity
-            target_assistant = await event.client.get_input_entity(ASSISTANT_USERNAME)
-            
-            await event.client(InviteToGroupCallRequest(
-                call=call_info,
-                users=[target_assistant]
-            ))
+            # STEP 3: Safe Invite using Assistant Username fallback
+            try:
+                target_assistant = await event.client.get_input_entity("SIRxMSD")
+                await event.client(InviteToGroupCallRequest(
+                    call=call_info,
+                    users=[target_assistant]
+                ))
+            except Exception as e:
+                # Fallback: Agar input entity fail ho toh dynamic system response error throw karega
+                return await panel.edit(f"❌ **Assistant Entity Resolution Failed:** Send a message to `@SIRxMSD` from your main account first, then retry. `{str(e)}`")
 
-            await panel.edit(f"✨ **Assistant (@{ASSISTANT_USERNAME}) Invited Successfully!**\n🛰️ *Establishing Audio Stream Connection...*")
+            await panel.edit(f"✨ **Assistant Invited Successfully!**\n🛰️ *Establishing Audio Stream Connection...*")
 
             try:
                 await assistant.join_chat(event.chat_id)
@@ -131,7 +131,7 @@ async def setup(client):
                 f"🎵 **Now Streaming Live**\n\n"
                 f"🔹 **Title:** `{track_title}`\n"
                 f"👤 **Triggered By:** [Userbot Admin]\n"
-                f"⚙️ **Status:** Invite Pipeline Completed Successfully"
+                f"⚙️ **Status:** Professional Invite Pipeline Completed"
             )
 
         except Exception as framework_err:
@@ -157,4 +157,4 @@ async def setup(client):
             await panel.edit("⏹️ **Assistant stream disconnected successfully.**")
         except Exception as err:
             await panel.edit(f"❌ **Exit Error:** `{str(err)}`")
-              
+                
